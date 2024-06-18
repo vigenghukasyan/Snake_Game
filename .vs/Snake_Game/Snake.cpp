@@ -8,11 +8,10 @@ class Snake {
 private:
     bool gameOver;
     const int width = 20, height = 20;
-    int x, y, fruitX, fruitY, score;
+    int x, y, fruitX, fruitY, score, tailX[100], tailY[100], nTail;
     enum eDirection { STOP = 0, LEFT, RIGHT, UP, DOWN };
     eDirection dir;
 public:
-
     Snake() {
         srand(time(0));
         gameOver = false;
@@ -21,6 +20,7 @@ public:
         fruitX = rand() % width;
         fruitY = rand() % height;
         score = 0;
+        nTail = 0; // Initialize the tail length to 0
     }
 
     bool get_gameOver() const { return gameOver; }
@@ -42,9 +42,19 @@ public:
                     cout << "O";
                 else if (i == fruitY && j == fruitX)
                     cout << "F";
-                else
-                    cout << " "; // Empty space
+                else {
+                    bool print = false;
 
+                    for (int k = 0; k < nTail; k++) {
+                        if (tailX[k] == j && tailY[k] == i) {
+                            cout << "o";
+                            print = true;
+                        }
+                    }
+                    if (!print)
+                        cout << " "; // Empty space
+                }
+                    
                 if (j == width - 1)
                     cout << "#"; // Right wall
             }
@@ -63,27 +73,42 @@ public:
 
     void Input() {
         if (_kbhit()) {
-    switch (_getch()) {
-    case 'w':
-        dir = UP;
-        break;
-    case 'a':
-        dir = LEFT;
-        break;
-    case 'd':
-        dir = RIGHT;
-        break;
-    case 's':
-        dir = DOWN;
-        break;
-    case 'x':
-        gameOver = true;
-        break;
+            switch (_getch()) {
+            case 'w':
+                dir = UP;
+                break;
+            case 'a':
+                dir = LEFT;
+                break;
+            case 'd':
+                dir = RIGHT;
+                break;
+            case 's':
+                dir = DOWN;
+                break;
+            case 'x':
+                gameOver = true;
+                break;
     }
         }
     }
 
     void Logic() {
+        int prevX = tailX[0];
+        int prevY = tailY[0];
+        int prev2X, prev2Y;
+        tailX[0] = x;
+        tailY[0] = y;
+
+        for (int i = 1; i < nTail; i++) {
+            prev2X = tailX[i];
+            prev2Y = tailY[i];
+            tailX[i] = prevX;
+            tailY[i] = prevY;
+            prevX = prev2X;
+            prevY = prev2Y;
+        }
+        
         switch (dir) {
         case LEFT:
             x--;
@@ -100,14 +125,24 @@ public:
         default:
             break;
         }
-        if (x > width || x < 0 || y > height || y < 0)
-            gameOver = true;
+         // Check for boundary conditions
+        if (x >= width) x = 0; else if (x < 0) x = width - 1;
+        if (y >= height) y = 0; else if (y < 0) y = height - 1;
+        
+        // Check if the snake hits itself
+        for (int i = 0; i < nTail; i++) {
+            if (tailX[i] == x && tailY[i] == y)
+                gameOver = true;
+    }
+
+        // Check if the snake eats the fruit
         if (x == fruitX && y == fruitY) {
             score += 10;
             fruitX = rand() % width;
             fruitY = rand() % height;
-        }
+            nTail++;
     }
+}
 
 };
 
